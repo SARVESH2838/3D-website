@@ -1,3 +1,87 @@
+// Initialize Lenis Smooth Scroll
+if (typeof Lenis !== "undefined") {
+  const lenis = new Lenis({
+    lerp: 0.08, // This eliminates the "huge delay" by using snappy physics instead of a 1.2s fixed duration
+    smoothWheel: true,
+    smoothTouch: false,
+  });
+
+  // Dynamic 3D Card Scroll Engine
+  // Cache positions to completely eliminate layout thrashing (getBoundingClientRect inside a scroll event is bad)
+  const cards3D = Array.from(document.querySelectorAll('.stat-card, .info-card, .task-card, .faq-item, .form-card, .level-card')).map(el => {
+    return { el, top: 0, height: 0, width: 0, left: 0 };
+  });
+
+  const cacheCardPositions = () => {
+    // 1. Temporarily clear transforms to get true document layout positions
+    cards3D.forEach(card => {
+      card.oldTransform = card.el.style.transform;
+      card.el.style.transform = 'none';
+    });
+    
+    // 2. Read layout metrics
+    cards3D.forEach(card => {
+      const rect = card.el.getBoundingClientRect();
+      card.top = rect.top + window.scrollY;
+      card.height = rect.height;
+      card.width = rect.width;
+      card.left = rect.left;
+    });
+
+    // 3. Restore transforms
+    cards3D.forEach(card => {
+      card.el.style.transform = card.oldTransform;
+    });
+  };
+
+  // Cache on load and resize
+  window.addEventListener('resize', cacheCardPositions, { passive: true });
+  
+  const update3DCards = () => {
+    const windowHeight = window.innerHeight;
+    const windowWidth = window.innerWidth;
+    const scrollY = lenis.animatedScroll || window.scrollY;
+    
+    cards3D.forEach(card => {
+      // Calculate current rect.top relative to viewport without querying DOM layout
+      const currentTop = card.top - scrollY;
+      const cardCenterY = currentTop + card.height / 2;
+      
+      const distanceFromCenter = (cardCenterY - windowHeight / 2) / (windowHeight / 2);
+      
+      if (distanceFromCenter > -1.5 && distanceFromCenter < 1.5) {
+        const clampedDist = Math.max(-1.2, Math.min(1.2, distanceFromCenter));
+        const rotateX = clampedDist * 35; 
+        const translateZ = Math.abs(clampedDist) * -120;
+        const opacity = 1 - Math.pow(Math.abs(clampedDist), 3);
+        
+        const cardCenterX = card.left + card.width / 2;
+        const distFromCenterX = (cardCenterX - windowWidth / 2) / (windowWidth / 2);
+        const rotateY = distFromCenterX * 15;
+        
+        card.el.style.setProperty('--scroll-rot-x', `${rotateX}deg`);
+        card.el.style.setProperty('--scroll-rot-y', `${rotateY}deg`);
+        card.el.style.setProperty('--scroll-trans-z', `${translateZ}px`);
+        card.el.style.setProperty('--scroll-op', Math.max(0.05, opacity));
+      }
+    });
+  };
+
+  lenis.on('scroll', update3DCards);
+  
+  // Initial pass to set correct positions
+  setTimeout(() => {
+    cacheCardPositions();
+    update3DCards();
+  }, 50);
+
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+}
+
 // Shared navbar behavior
 const navbar = document.getElementById("navbar");
 const menuBtn = document.getElementById("menuBtn");
@@ -79,8 +163,8 @@ if (nexusObject) {
   let dpr = 1;
 
   // Reduced for smooth performance
-  const SHAPE_COUNT = 92;
-  const AMBIENT_COUNT = 54;
+  const SHAPE_COUNT = 50;
+  const AMBIENT_COUNT = 30;
 
   const shapeParticles = [];
   const ambientParticles = [];
@@ -116,12 +200,80 @@ if (nexusObject) {
     return a + (b - a) * t;
   }
 
+  let smoothedScrollY = 0;
+  let scrollProgress = 0;
+
+  let mouseX = 0;
+  let mouseY = 0;
+  let targetMouseX = 0;
+  let targetMouseY = 0;
+
+  window.addEventListener("mousemove", (e) => {
+    targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2.0;
+    targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2.0;
+  }, { passive: true });
+
+  function getScrollParameters() {
+    const t = scrollProgress;
+    let centerX = 0;
+    let centerY = 0;
+    let scaleMultiplier = 1.0;
+    let dispersion = 0.0;
+    let rotationSpeed = 1.0;
+
+    const isMobile = width < 760;
+    const heroCenterX = isMobile ? width * 0.5 : width * 0.68;
+    const heroCenterY = isMobile ? height * 0.55 : height * 0.48;
+
+    if (t < 0.25) {
+      // Hero (Right-aligned) -> Stats (Centered and scaled up 1.4x)
+      const p = t / 0.25;
+      centerX = mix(heroCenterX, width * 0.5, p);
+      centerY = mix(heroCenterY, height * 0.5, p);
+      scaleMultiplier = mix(1.0, 1.4, p);
+      dispersion = 0.0;
+      rotationSpeed = mix(1.0, 1.8, p);
+    } else if (t < 0.5) {
+      // Stats (Centered 1.4x) -> Role (Left-aligned, 0.95x, tilt)
+      const p = (t - 0.25) / 0.25;
+      centerX = mix(width * 0.5, isMobile ? width * 0.5 : width * 0.28, p);
+      centerY = mix(height * 0.5, height * 0.48, p);
+      scaleMultiplier = mix(1.4, 0.95, p);
+      dispersion = 0.0;
+      rotationSpeed = mix(1.8, 1.2, p);
+    } else if (t < 0.75) {
+      // Role (Left-aligned) -> Journey (Slowly disperses into flying tunnel effect)
+      const p = (t - 0.5) / 0.25;
+      centerX = mix(isMobile ? width * 0.5 : width * 0.28, width * 0.5, p);
+      centerY = mix(height * 0.48, height * 0.5, p);
+      scaleMultiplier = mix(0.95, 2.2, p);
+      dispersion = p * 1.6;
+      rotationSpeed = mix(1.2, 3.0, p);
+    } else {
+      // Journey -> CTA (Re-forms beautifully into a background halo)
+      const p = (t - 0.75) / 0.25;
+      centerX = width * 0.5;
+      centerY = mix(height * 0.5, height * 0.55, p);
+      scaleMultiplier = mix(2.2, 1.5, p);
+      dispersion = mix(1.6, 0.15, p);
+      rotationSpeed = mix(3.0, 0.8, p);
+    }
+
+    return {
+      centerX,
+      centerY,
+      scaleMultiplier,
+      dispersion,
+      rotationSpeed,
+    };
+  }
+
   // Full-screen scatter, not right-side clustered
   function makeScatterTarget() {
     return {
-      x: random(width * 0.06, width * 0.94),
-      y: random(height * 0.12, height * 0.88),
-      z: random(-0.8, 0.8),
+      x: random(-1.2, 1.2),
+      y: random(-1.2, 1.2),
+      z: random(-1.0, 1.0),
     };
   }
 
@@ -159,9 +311,16 @@ if (nexusObject) {
     let y = point.y;
     let z = point.z;
 
-    const rotX = -0.58 + Math.sin(time * 0.00012) * 0.1;
-    const rotY = time * 0.00008 + (type === "hexagon" ? 0.25 : 0);
-    const rotZ = time * 0.00004;
+    const params = getScrollParameters();
+
+    // Scroll-based rotation angles
+    const scrollAngleY = scrollProgress * Math.PI * 1.5;
+    const scrollAngleX = scrollProgress * Math.PI * 0.5;
+
+    // Apply mouse parallax tilt
+    const rotX = -0.58 + Math.sin(time * 0.00012) * 0.1 + scrollAngleX - mouseY * 0.15;
+    const rotY = time * 0.00008 * params.rotationSpeed + (type === "hexagon" ? 0.25 : 0) + scrollAngleY + mouseX * 0.15;
+    const rotZ = time * 0.00004 + scrollProgress * 0.8;
 
     // Rotate X
     let c = Math.cos(rotX);
@@ -188,21 +347,31 @@ if (nexusObject) {
     return { x: x1, y: y1, z };
   }
 
-  function project3D(point, type) {
+  function project3D(point, type, index = 0) {
     const isMobile = width < 760;
 
-    // Shape sits more naturally in the open hero space,
-    // but scatter still covers the whole screen.
-    const centerX = isMobile ? width * 0.55 : width * 0.68;
-    const centerY = isMobile ? height * 0.55 : height * 0.48;
+    const params = getScrollParameters();
 
-    const baseSize = Math.min(width, height) * (isMobile ? 0.23 : 0.27);
-    const perspective = 2.9 / (2.9 - point.z);
+    let px = point.x;
+    let py = point.y;
+    let pz = point.z;
+
+    // Apply dispersion pushing particles radially out
+    if (params.dispersion > 0.0) {
+      const angle = index * 2.39996; // golden angle for uniform distribution
+      const push = (index / SHAPE_COUNT) * params.dispersion * 1.5;
+      px += Math.cos(angle) * push;
+      py += Math.sin(angle) * push;
+      pz += Math.sin(index * 0.9) * params.dispersion * 0.5;
+    }
+
+    const baseSize = Math.min(width, height) * (isMobile ? 0.23 : 0.27) * params.scaleMultiplier;
+    const perspective = 2.9 / (2.9 - pz);
 
     return {
-      x: centerX + point.x * baseSize * perspective,
-      y: centerY + point.y * baseSize * perspective,
-      z: point.z,
+      x: params.centerX + px * baseSize * perspective,
+      y: params.centerY + py * baseSize * perspective,
+      z: pz,
       perspective,
     };
   }
@@ -342,14 +511,11 @@ if (nexusObject) {
 
     const breathe = 1 + Math.sin(time * 0.00055 + index * 0.72) * 0.008;
 
-    point = {
+    return {
       x: point.x * breathe,
       y: point.y * breathe,
       z: point.z + Math.sin(index * 1.2 + time * 0.00026) * 0.018,
     };
-
-    const rotated = rotate3D(point, time, type);
-    return project3D(rotated, type);
   }
 
   function resizeCanvas() {
@@ -372,9 +538,12 @@ if (nexusObject) {
         const scatterB = makeScatterTarget();
 
         shapeParticles.push({
-          x: scatterA.x,
-          y: scatterA.y,
-          z: scatterA.z,
+          x: 0,
+          y: 0,
+          z: 0,
+          localX: scatterA.x,
+          localY: scatterA.y,
+          localZ: scatterA.z,
           scatterA,
           scatterB,
           size: random(0.65, 1.15),
@@ -562,9 +731,9 @@ if (nexusObject) {
         targetZ = mix(shapeTarget.z, p.scatterB.z, progress);
       }
 
-      p.x += (targetX - p.x) * p.speed;
-      p.y += (targetY - p.y) * p.speed;
-      p.z += (targetZ - p.z) * p.speed;
+      p.localX += (targetX - p.localX) * p.speed;
+      p.localY += (targetY - p.localY) * p.speed;
+      p.localZ += (targetZ - p.localZ) * p.speed;
     });
 
     return {
@@ -581,12 +750,32 @@ if (nexusObject) {
     requestAnimationFrame(animate);
 
     if (document.hidden) return;
-    if (time - lastFrame < frameInterval) return;
-    lastFrame = time;
+
+    // Smoothly interpolate scroll state
+    const targetScroll = window.scrollY;
+    smoothedScrollY += (targetScroll - smoothedScrollY) * 0.15;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    scrollProgress = docHeight > 0 ? smoothedScrollY / docHeight : 0;
+
+    // Smoothly interpolate mouse parallax coordinates
+    mouseX += (targetMouseX - mouseX) * 0.08;
+    mouseY += (targetMouseY - mouseY) * 0.08;
 
     ctx.clearRect(0, 0, width, height);
 
     const state = updateTargets(time);
+
+    // Update screen-space coordinates on every single frame based on the latest scroll/mouse parameters
+    shapeParticles.forEach((p, index) => {
+      const localPoint = { x: p.localX, y: p.localY, z: p.localZ };
+      const rotated = rotate3D(localPoint, time, state.shapeType);
+      const projected = project3D(rotated, state.shapeType, index);
+
+      p.x = projected.x;
+      p.y = projected.y;
+      p.z = projected.z;
+      p.perspective = projected.perspective;
+    });
 
     ctx.globalCompositeOperation = "source-over";
     drawAmbientParticles();
@@ -688,6 +877,9 @@ updateHeroPhase();
   const rightBeams = makeBeamSeeds(14, 47.7);
   const centerBeams = makeBeamSeeds(8, 83.1);
 
+  let smoothedScrollY = 0;
+  let scrollProgress = 0;
+
   function hash(n) {
     const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
     return x - Math.floor(x);
@@ -747,9 +939,13 @@ updateHeroPhase();
   function curvePoint(curve, t) {
     const p = cubic(curve.p0, curve.p1, curve.p2, curve.p3, t);
 
+    // Apply scroll-linked drift (drift downwards) and horizontal wave distortion
+    const scrollOffset = scrollProgress * height * 0.35;
+    const wave = Math.sin(t * Math.PI + scrollProgress * 3.5) * width * 0.035;
+
     return {
-      x: p.x * width,
-      y: p.y * height,
+      x: p.x * width + wave,
+      y: p.y * height + scrollOffset,
     };
   }
 
@@ -1115,8 +1311,12 @@ updateHeroPhase();
     requestAnimationFrame(render);
 
     if (document.hidden) return;
-    if (time - lastFrame < FRAME_DELAY) return;
-    lastFrame = time;
+
+    // Smoothly interpolate scroll state
+    const targetScroll = window.scrollY;
+    smoothedScrollY += (targetScroll - smoothedScrollY) * 0.15;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    scrollProgress = docHeight > 0 ? smoothedScrollY / docHeight : 0;
 
     ctx.clearRect(0, 0, width, height);
     drawAurora(time || 0);

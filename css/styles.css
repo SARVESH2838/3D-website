@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Syne:wght@700;800&display=swap');
+
 :root {
   --bg: #070914;
   --bg-2: #101735;
@@ -23,7 +25,24 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* Native smooth scroll must be removed or set to auto when using Lenis */
+}
+
+/* LENIS REQUIRED CSS TO PREVENT CONFLICTS */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
 body {
@@ -63,10 +82,10 @@ body::before {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 80px 80px;
-  mask-image: linear-gradient(to bottom, black, transparent 84%);
+  /* Removed heavy mask-image that caused GPU thrashing during scroll */
   z-index: -2;
 }
 
@@ -172,7 +191,7 @@ textarea {
     rgba(255, 255, 255, 0.055)
   );
   box-shadow: var(--shadow);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(8px);
 }
 
 /* NAVBAR */
@@ -546,11 +565,21 @@ textarea {
 .info-card,
 .task-card,
 .faq-item,
-.form-card {
+.form-card,
+.level-card {
+  --scroll-rot-x: 0deg;
+  --scroll-rot-y: 0deg;
+  --scroll-trans-z: 0px;
+  --scroll-op: 1;
+  
+  opacity: var(--scroll-op);
+  transform: perspective(1200px) rotateX(var(--scroll-rot-x)) rotateY(var(--scroll-rot-y)) translateZ(var(--scroll-trans-z));
+  will-change: transform, opacity;
+
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(8px);
 }
 
 .stat-card {
@@ -572,13 +601,13 @@ textarea {
 .info-card {
   padding: 28px;
   min-height: 230px;
-  transition: 0.22s ease;
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .info-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(85, 230, 255, 0.38);
-  background: rgba(255, 255, 255, 0.095);
+  border-color: rgba(85, 230, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(85, 230, 255, 0.15);
 }
 
 .icon-box {
@@ -635,10 +664,6 @@ textarea {
   position: relative;
   z-index: 1;
   padding: 24px;
-  border-radius: 26px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(18px);
 }
 
 .level-badge {
@@ -3977,3 +4002,417 @@ footer {
     opacity: 0.78 !important;
   }
 }
+
+/* =====================================================
+   PREMIUM HAND-CRAFTED DESIGN SYSTEM OVERHAUL
+   Elevating Typography, Spacing, Buttons, and Cards
+   ===================================================== */
+
+/* 1. Global Font Overrides with safe fallbacks */
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 400;
+  line-height: 1.8 !important;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings with Syne for maximum agency premium aesthetic */
+h1, h2, h3, h4, h5, h6,
+.section-title, .page-title,
+.brand strong, .brand-mark, .nav-signin {
+  font-family: 'Syne', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+}
+
+/* Technical Monospace Elements */
+.eyebrow, 
+.points-pill, 
+.tag, 
+.role-strip, 
+.hero-badge, 
+.console-state, 
+.launch-meter, 
+.stat-card strong, 
+.mission-metrics strong, 
+.level-badge,
+.faq-question span {
+  font-family: 'Space Mono', 'Courier New', Courier, monospace !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 700 !important;
+}
+
+/* 2. Elevated Typography Hierarchy & Spacing */
+.section-title, .page-title {
+  line-height: 1.05 !important;
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin-bottom: 20px !important;
+  font-size: 0.75rem !important;
+  opacity: 0.9;
+}
+
+.section-copy, .page-copy {
+  font-size: 1.1rem !important;
+  line-height: 1.8 !important;
+  margin-bottom: 40px;
+  max-width: 680px !important;
+  opacity: 0.8;
+}
+
+/* Sections breathing room */
+.section {
+  padding: 140px 24px !important;
+}
+
+.page-hero {
+  padding: 180px 24px 100px !important;
+}
+
+/* 3. Premium Glassmorphic Cards & Spacing */
+.stat-card,
+.info-card,
+.task-card,
+.faq-item,
+.form-card,
+.level-card,
+.profile-panel,
+.id-card {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 20px !important; /* Premium tighter radius */
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(24px) !important;
+  padding: 36px !important;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle corner decoration on cards for a custom tech feel */
+.stat-card::before,
+.info-card::before,
+.task-card::before,
+.level-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(85, 230, 255, 0.15), transparent);
+  transform: scaleX(0);
+  transition: transform 0.5s ease;
+}
+
+/* Card Hover States */
+.stat-card:hover,
+.info-card:hover,
+.task-card:hover,
+.level-card:hover {
+  transform: translateY(-6px) translateZ(0) !important;
+  border-color: rgba(85, 230, 255, 0.25) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.015) 100%
+  ) !important;
+  box-shadow: 
+    0 40px 80px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(85, 230, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.stat-card:hover::before,
+.info-card:hover::before,
+.task-card:hover::before,
+.level-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Specific card padding overrides for layout consistency */
+.faq-item {
+  padding: 24px 32px !important;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.faq-item.open {
+  border-color: rgba(85, 230, 255, 0.2) !important;
+}
+
+.faq-question {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem;
+}
+
+/* Stat card design layout */
+.stat-card strong {
+  display: block;
+  font-size: 3rem !important;
+  line-height: 1.1;
+  color: var(--cyan);
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+}
+
+.stat-card span {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* Icon Box Design */
+.icon-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  font-size: 1.8rem !important;
+  margin-bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.info-card:hover .icon-box {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(85, 230, 255, 0.1) !important;
+  border-color: rgba(85, 230, 255, 0.3) !important;
+}
+
+/* 4. Highly Creative Interactive Buttons */
+.btn {
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase;
+  font-size: 0.85rem !important;
+  padding: 0 32px !important;
+  height: 52px !important;
+  border-radius: 12px !important; /* Square-ish modern shape instead of round bubbles */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  box-shadow: none !important;
+  border: 1px solid transparent !important;
+}
+
+.btn-primary {
+  background: #ffffff !important;
+  color: #050711 !important;
+  border-color: #ffffff !important;
+}
+
+.btn-primary:hover {
+  background: transparent !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 15px 30px rgba(255, 255, 255, 0.1) !important;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-3px) !important;
+}
+
+.btn:active {
+  transform: translateY(-1px) !important;
+}
+
+/* 5. Modern Nav bar styling */
+.nav, #navbar {
+  background: rgba(7, 9, 20, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(20px) !important;
+  padding: 10px 24px !important;
+  border-radius: 16px !important; /* Premium squircle shape */
+  top: 30px !important;
+  transition: all 0.4s ease !important;
+}
+
+.nav.scrolled {
+  background: rgba(7, 9, 20, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+  top: 15px !important;
+}
+
+.nav-links a {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  opacity: 0.6;
+  padding: 8px 16px !important;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  opacity: 1 !important;
+  color: var(--cyan) !important;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.points-pill {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  padding: 6px 14px !important;
+  font-size: 0.8rem !important;
+}
+
+.nav-signin {
+  border-radius: 8px !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0 18px !important;
+}
+
+/* Grid Gap Tweaks */
+.grid {
+  gap: 24px !important;
+}
+
+/* Hero Badge Styling */
+.hero-badge {
+  background: rgba(85, 230, 255, 0.06) !important;
+  border: 1px solid rgba(85, 230, 255, 0.15) !important;
+  border-radius: 6px !important;
+  color: var(--cyan) !important;
+  font-size: 0.7rem !important;
+  padding: 6px 14px !important;
+  display: inline-block;
+  margin-bottom: 24px !important;
+}
+
+/* 6. Form Fields Aesthetics */
+.form-card input, 
+.form-card textarea {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  padding: 14px 18px !important;
+  margin-bottom: 20px !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.form-card input:focus, 
+.form-card textarea:focus {
+  outline: none !important;
+  border-color: var(--cyan) !important;
+  background: rgba(85, 230, 255, 0.02) !important;
+  box-shadow: 0 0 15px rgba(85, 230, 255, 0.05) !important;
+}
+
+.form-card label {
+  font-family: 'Syne', sans-serif !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px !important;
+  display: block;
+  opacity: 0.8;
+}
+
+/* 7. Tags / Chips */
+.tag {
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase;
+  background: rgba(85, 230, 255, 0.05) !important;
+  border-color: rgba(85, 230, 255, 0.12) !important;
+  color: var(--cyan) !important;
+}
+
+/* Level badge/cards */
+.level-badge {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 12px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem !important;
+  margin-bottom: 20px;
+}
+
+.level-card {
+  text-align: left !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Journey Line */
+.journey-line {
+  gap: 24px !important;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 980px) {
+  .journey-line {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .journey-line {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Footer Overhaul */
+.footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding: 60px 24px !important;
+  background: rgba(5, 7, 18, 0.4) !important;
+  backdrop-filter: blur(10px);
+}
+
+.footer-inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.footer-links a {
+  opacity: 0.5;
+  transition: all 0.3s ease;
+  font-size: 0.85rem !important;
+}
+
+.footer-links a:hover {
+  opacity: 1;
+  color: var(--cyan) !important;
+}
+
