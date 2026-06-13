@@ -4416,3 +4416,135 @@ h1, h2, h3, h4, h5, h6,
   color: var(--cyan) !important;
 }
 
+/* =====================================================
+   SIMULATED PARADIGM THEME INJECTIONS
+   ===================================================== */
+
+/* CYBER CURSOR */
+@media (pointer: fine) {
+  body {
+    cursor: none;
+  }
+  
+  a, button, input, select, textarea, .faq-question {
+    cursor: none;
+  }
+
+  .cyber-cursor, .cyber-cursor-trail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .cyber-cursor {
+    width: 6px;
+    height: 6px;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+    transition: width 0.2s, height 0.2s, background 0.2s;
+  }
+
+  .cyber-cursor-trail {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(85, 230, 255, 0.4);
+    transition: width 0.2s, height 0.2s, border-radius 0.2s, border-color 0.2s;
+  }
+
+  .cyber-cursor-trail::after, .cyber-cursor-trail::before {
+    content: '';
+    position: absolute;
+    width: 5px;
+    height: 1px;
+    background: var(--cyan);
+    transition: background 0.2s;
+  }
+
+  .cyber-cursor-trail::before { top: 50%; left: -5px; transform: translateY(-50%); }
+  .cyber-cursor-trail::after { top: 50%; right: -5px; transform: translateY(-50%); }
+
+  body:active .cyber-cursor {
+    width: 4px;
+    height: 4px;
+  }
+
+  body:active .cyber-cursor-trail {
+    width: 28px;
+    height: 28px;
+  }
+
+  .cursor-hover .cyber-cursor-trail {
+    width: 52px;
+    height: 52px;
+    border-color: var(--violet);
+    border-radius: 8px;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .cursor-hover .cyber-cursor {
+    background: var(--violet);
+    box-shadow: 0 0 14px var(--violet);
+  }
+  
+  .cursor-hover .cyber-cursor-trail::after,
+  .cursor-hover .cyber-cursor-trail::before {
+    background: var(--violet);
+  }
+}
+
+/* HUD CARD DETAILS */
+.stat-card, .info-card, .task-card {
+  position: relative;
+}
+
+.stat-card::before, .info-card::before, .task-card::before {
+  content: '+';
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  color: var(--cyan);
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem;
+  opacity: 0.6;
+  line-height: 1;
+}
+
+.stat-card::after, .info-card::after, .task-card::after {
+  content: 'SYS.OP.OK';
+  position: absolute;
+  bottom: 12px;
+  right: 18px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  opacity: 0.35;
+  transition: opacity 0.3s, color 0.3s, text-shadow 0.3s;
+}
+
+.stat-card:hover::after, .info-card:hover::after, .task-card:hover::after {
+  content: 'NODE_ACTIVE';
+  color: var(--green);
+  opacity: 0.9;
+  text-shadow: 0 0 8px rgba(106, 255, 193, 0.4);
+}
+
+.info-card {
+  overflow: hidden; /* For inner glitch effect */
+}
+
+/* Simulated Paradigm Hover States */
+.card-hover-active {
+  border-color: rgba(106, 255, 193, 0.6) !important;
+  box-shadow: inset 0 0 20px rgba(106, 255, 193, 0.1), 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(106, 255, 193, 0.2) !important;
+}
+
+/* Glitch text effect wrapper */
+.glitch-wrapper {
+  position: relative;
+  display: inline-block;
+}

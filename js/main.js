@@ -147,6 +147,117 @@ if (nexusObject) {
 }
 
 // =====================================================
+// SIMULATED PARADIGM: CYBER CURSOR & DECODER
+// =====================================================
+
+// 1. Cyber Cursor
+const cyberCursor = document.createElement('div');
+cyberCursor.className = 'cyber-cursor';
+const cyberCursorTrail = document.createElement('div');
+cyberCursorTrail.className = 'cyber-cursor-trail';
+document.body.appendChild(cyberCursor);
+document.body.appendChild(cyberCursorTrail);
+
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let trailX = mouseX;
+let trailY = mouseY;
+
+window.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  cyberCursor.style.left = `${mouseX}px`;
+  cyberCursor.style.top = `${mouseY}px`;
+});
+
+function animateCursor() {
+  trailX += (mouseX - trailX) * 0.2;
+  trailY += (mouseY - trailY) * 0.2;
+  cyberCursorTrail.style.left = `${trailX}px`;
+  cyberCursorTrail.style.top = `${trailY}px`;
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+// 2. Hacker Text Decoder
+class HackerTextDecoder {
+  constructor(element) {
+    this.element = element;
+    this.originalText = element.innerText;
+    this.chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+<>_';
+    this.frame = 0;
+    this.decodeDelay = 2; // frames per letter
+    this.decoded = false;
+  }
+  
+  decode() {
+    if (this.decoded) return;
+    this.decoded = true;
+    let iteration = 0;
+    
+    const interval = setInterval(() => {
+      this.element.innerText = this.originalText
+        .split('')
+        .map((char, index) => {
+          if (index < iteration || char === ' ') {
+            return this.originalText[index];
+          }
+          return this.chars[Math.floor(Math.random() * this.chars.length)];
+        })
+        .join('');
+      
+      if (iteration >= this.originalText.length) {
+        clearInterval(interval);
+      }
+      iteration += 1 / this.decodeDelay;
+    }, 30);
+  }
+}
+
+const decodeObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      if (entry.target._decoder) {
+        entry.target._decoder.decode();
+      }
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('h2, h3, .eyebrow').forEach(el => {
+  el._decoder = new HackerTextDecoder(el);
+  decodeObserver.observe(el);
+});
+
+// 3. Global Canvas State
+window.techfestState = {
+  speedMultiplier: 1.0,
+  colorShift: 0.0,
+  mouseX: window.innerWidth / 2,
+  mouseY: window.innerHeight / 2
+};
+
+window.addEventListener('mousemove', (e) => {
+  window.techfestState.mouseX = e.clientX;
+  window.techfestState.mouseY = e.clientY;
+});
+
+document.querySelectorAll('.card-3d').forEach(card => {
+  card.addEventListener('mouseenter', () => {
+    document.body.classList.add('cursor-hover');
+    card.classList.add('card-hover-active');
+    window.techfestState.speedMultiplier = 4.0;
+    window.techfestState.colorShift = 1.0;
+  });
+  card.addEventListener('mouseleave', () => {
+    document.body.classList.remove('cursor-hover');
+    card.classList.remove('card-hover-active');
+    window.techfestState.speedMultiplier = 1.0;
+    window.techfestState.colorShift = 0.0;
+  });
+});
+
+// =====================================================
 // OPTIMIZED MASTER BACKGROUND:
 // Smooth full-screen particle network
 // Scatter → 3D Triangle → Scatter → 3D Square → Scatter → 3D Hexagon
@@ -621,18 +732,26 @@ if (nexusObject) {
       Math.min(86, Math.min(width, height) * 0.085),
     );
 
+    let shift = 0;
+    if (window.techfestState) shift = window.techfestState.colorShift;
+
+    // Lerp colors based on trigger states
+    const r = Math.floor(95 + (106 - 95) * shift);
+    const g = Math.floor(220 + (255 - 220) * shift);
+    const b = Math.floor(255 + (193 - 255) * shift);
+
     for (let i = 0; i < shapeParticles.length; i++) {
       const a = shapeParticles[i];
 
       for (let j = i + 1; j < shapeParticles.length; j++) {
-        const b = shapeParticles[j];
+        const bP = shapeParticles[j];
 
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
+        const dx = a.x - bP.x;
+        const dy = a.y - bP.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < maxDistance) {
-          const zDifference = Math.abs(a.z - b.z);
+          const zDifference = Math.abs(a.z - bP.z);
 
           if (zDifference > 0.95) continue;
 
@@ -645,8 +764,8 @@ if (nexusObject) {
 
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(95, 220, 255, ${alpha})`;
+          ctx.lineTo(bP.x, bP.y);
+          ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.lineWidth = 1;
           ctx.stroke();
         }
@@ -657,6 +776,19 @@ if (nexusObject) {
   function drawShapeParticles(visibility) {
     ctx.save();
 
+    let shift = 0;
+    if (window.techfestState) shift = window.techfestState.colorShift;
+
+    // Outer glow
+    const rOuter = Math.floor(85 + (106 - 85) * shift);
+    const gOuter = Math.floor(230 + (255 - 230) * shift);
+    const bOuter = Math.floor(255 + (193 - 255) * shift);
+    
+    // Inner core
+    const rInner = Math.floor(225 + (200 - 225) * shift);
+    const gInner = Math.floor(250 + (255 - 250) * shift);
+    const bInner = Math.floor(255 + (220 - 255) * shift);
+
     for (const p of shapeParticles) {
       const depthBoost = 1 + p.z * 0.1;
       const radius = p.size * depthBoost * (1 + visibility * 0.16);
@@ -664,12 +796,12 @@ if (nexusObject) {
       // Small glow, not huge laggy glow
       ctx.beginPath();
       ctx.arc(p.x, p.y, radius * 2.4, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(85, 230, 255, ${0.12 + visibility * 0.18})`;
+      ctx.fillStyle = `rgba(${rOuter}, ${gOuter}, ${bOuter}, ${0.12 + visibility * 0.18})`;
       ctx.fill();
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(225, 250, 255, ${0.76 + visibility * 0.22})`;
+      ctx.fillStyle = `rgba(${rInner}, ${gInner}, ${bInner}, ${0.76 + visibility * 0.22})`;
       ctx.fill();
     }
 
@@ -746,10 +878,30 @@ if (nexusObject) {
   const targetFPS = 34;
   const frameInterval = 1000 / targetFPS;
 
+  let canvasTime = 0;
+  let lastRealTime = 0;
+  let currentSpeed = 1.0;
+  let currentColorShift = 0.0;
+
   function animate(time) {
     requestAnimationFrame(animate);
 
     if (document.hidden) return;
+
+    // Time scaling for speed triggers
+    const dt = time - lastRealTime;
+    lastRealTime = time;
+    
+    // Safety clamp dt to avoid huge jumps if tab was inactive
+    if (dt > 100 || dt < 0) {
+       canvasTime += 16;
+    } else {
+       if (window.techfestState) {
+         currentSpeed += (window.techfestState.speedMultiplier - currentSpeed) * 0.08;
+         currentColorShift += (window.techfestState.colorShift - currentColorShift) * 0.08;
+       }
+       canvasTime += dt * currentSpeed;
+    }
 
     // Smoothly interpolate scroll state
     const targetScroll = window.scrollY;
@@ -763,13 +915,27 @@ if (nexusObject) {
 
     ctx.clearRect(0, 0, width, height);
 
-    const state = updateTargets(time);
+    const state = updateTargets(canvasTime);
 
     // Update screen-space coordinates on every single frame based on the latest scroll/mouse parameters
     shapeParticles.forEach((p, index) => {
       const localPoint = { x: p.localX, y: p.localY, z: p.localZ };
-      const rotated = rotate3D(localPoint, time, state.shapeType);
+      const rotated = rotate3D(localPoint, canvasTime, state.shapeType);
       const projected = project3D(rotated, state.shapeType, index);
+
+      // Dynamic Magnetism
+      if (window.techfestState) {
+        const dx = projected.x - window.techfestState.mouseX;
+        const dy = projected.y - window.techfestState.mouseY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist < 280) {
+          const force = (280 - dist) / 280;
+          const swirlFactor = 1.0 + (currentSpeed - 1.0) * 0.5; // Swirl more when speed is high
+          projected.x += (dx * 0.15 + dy * 0.3) * force * swirlFactor;
+          projected.y += (dy * 0.15 - dx * 0.3) * force * swirlFactor;
+        }
+      }
 
       p.x = projected.x;
       p.y = projected.y;
